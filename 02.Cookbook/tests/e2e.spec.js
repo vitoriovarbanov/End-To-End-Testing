@@ -32,10 +32,10 @@ let context;
 let page;
 
 describe('E2E tests', function () {
-    this.timeout(60000);
+    this.timeout(6000);
 
     before(async () => {
-        browser = await chromium.launch({ headless: false, slowMo: 1500 });
+        browser = await chromium.launch({ headless: false, slowMo: 500 });
         //browser = await chromium.launch();
     });
 
@@ -62,20 +62,20 @@ describe('E2E tests', function () {
 
     describe('Catalog', () => {
         it('Displays initial data', async () => {
-            await page.route('**' + endpoints.recipes + '**', (request)=>{
-                request.fulfill(json(mockData.list))
+            page.route('**' + endpoints.recipes + '**', (route) => {
+                route.fulfill(json(mockData.list))
             })
             await page.goto('http://localhost:3000');
             await page.waitForSelector('article')
-            const titles = await page.$$eval('h2', titles =>titles.map(x=>x.textContent))
+            const titles = await page.$$eval('h2', titles => titles.map(x => x.textContent))
             expect(titles[0]).to.contains('Easy Lasagna')
             expect(titles[1]).to.contains('Grilled Duck Fillet')
             expect(titles[2]).to.contains('Roast Trout')
         })
     })
 
-    describe('Authentication', ()=>{
-        it('Register', async ()=>{
+    describe('Authentication', () => {
+        it('Register', async () => {
             const endpoint = '**' + endpoints.register;
             const email = 'john@abv.bg';
             const password = '123456';
@@ -97,6 +97,32 @@ describe('E2E tests', function () {
             ]);
 
             const postData = JSON.parse(response.request().postData());
+            expect(postData.email).to.equal(email);
+            expect(postData.password).to.equal(password);
+        })
+
+        it('Login', async () => {
+            const endpoint = '**' + endpoints.login;
+            const email = 'peter@abv.bg';
+            const password = '123456'
+            page.route('**' + endpoints.login, router => router.fulfill(json({ _id: '2225', email, accessToken: 'tokenAAA' })))
+
+            await page.goto('http://localhost:3000')
+            await page.click('#loginLink');
+
+            await page.waitForSelector('form')
+
+            await page.fill('[name="email"]', email)
+            await page.fill('[name="password"]', password)
+
+            await page.waitForTimeout(100)
+
+            const [response] = await Promise.all([
+                page.waitForResponse(endpoint),
+                page.click('[type="submit"]')
+            ])
+
+            const postData = JSON.parse(response.request().postData())
             expect(postData.email).to.equal(email);
             expect(postData.password).to.equal(password);
         })
