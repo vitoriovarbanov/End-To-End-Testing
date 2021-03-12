@@ -32,11 +32,11 @@ let context;
 let page;
 
 describe('E2E tests', function () {
-    this.timeout(6000);
+    this.timeout(60000);
 
     before(async () => {
-        // browser = await chromium.launch({ headless: false, slowMo: 1500 });
-        browser = await chromium.launch();
+        browser = await chromium.launch({ headless: false, slowMo: 1500 });
+        //browser = await chromium.launch();
     });
 
     after(async () => {
@@ -71,6 +71,34 @@ describe('E2E tests', function () {
             expect(titles[0]).to.contains('Easy Lasagna')
             expect(titles[1]).to.contains('Grilled Duck Fillet')
             expect(titles[2]).to.contains('Roast Trout')
+        })
+    })
+
+    describe('Authentication', ()=>{
+        it('Register', async ()=>{
+            const endpoint = '**' + endpoints.register;
+            const email = 'john@abv.bg';
+            const password = '123456';
+
+            page.route(endpoint, route => route.fulfill(json({ _id: '0001', email, accessToken: 'AAAA' })));
+
+            await page.goto('http://localhost:3000');
+            await page.click('text=Register');
+
+            await page.waitForSelector('form');
+
+            await page.fill('[name="email"]', email);
+            await page.fill('[name="password"]', password);
+            await page.fill('[name="rePass"]', password);
+
+            const [response] = await Promise.all([
+                page.waitForResponse(endpoint),
+                page.click('[type="submit"]')
+            ]);
+
+            const postData = JSON.parse(response.request().postData());
+            expect(postData.email).to.equal(email);
+            expect(postData.password).to.equal(password);
         })
     })
 
