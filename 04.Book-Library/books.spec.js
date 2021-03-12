@@ -43,37 +43,19 @@ describe('E2E tests', function () {
     });
 
     describe('Load Message', function () {
-        it('loads static page', async function () {
+        it('Loads static page', async function () {
             await page.goto('http://localhost:3000/');
             await page.screenshot({ path: `index.png` });
         })
 
-        it('All messages are loaded properly', async function () {
-            await page.goto(host)
+            //`http://localhost:3030/jsonstore/collections/books`
+        it('Load books', async function () {
+            await page.goto('http://localhost:3000/')
+            await page.click('#loadBooks')
 
-            await page.click('#refresh')
-            const text = await page.$$eval('#messages ', (value) => value.map(x => x.value));
-            expect(text[0]).to.includes('Spami: Hello, are you there?\n')
-        })
-
-        it('Send Message', async function () {
-            const author = 'Hacker'
-            const content = 'Hack them all'
-            page.route(host, route => route.fulfill(json({ author: 'Someone', content: 'YOYOY', _id: '2214512' })));
-
-            await page.goto(host)
-
-            await page.fill('#author', author)
-            await page.fill('#content', content)
-
-            const [request] = await Promise.all([
-                page.waitForRequest(request => request.url().includes('/jsonstore/messenger') && request.method() === 'POST'),
-                page.click('#submit')
-            ])
-
-            const postData = JSON.parse(request.postData());
-            expect(postData.author).to.equal(author);
-            expect(postData.content).to.equal(content); 
+            const results = await page.$$eval('tbody', (value) => value.map(x => x.textContent))
+            expect(results[0]).to.includes('Harry Potter and the Philosopher\'s Stone\n')
+            expect(results[0]).to.includes('C# Fundamentals')
         })
     })
 
