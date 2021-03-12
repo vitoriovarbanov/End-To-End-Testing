@@ -13,16 +13,34 @@ describe('E2E tests', function () {
     it('loads static page', async function () {
         await page.goto('http://localhost:3000/');
         await page.screenshot({ path: `index.png` });
-        await browser.close();
     })
 
-    it('Displays all articles', async function(){
+    it('Displays all articles', async function () {
         await page.goto('http://localhost:3000/')
-        const titles = await page.$$eval('.accordion .head span', (titles) => titles.map(x=>x.textContent));
+        const titles = await page.$$eval('.accordion .head span', (titles) => titles.map(x => x.textContent));
         expect(titles).includes('Scalable Vector Graphics')
         expect(titles).includes('Open standard')
         expect(titles).includes('Unix')
         expect(titles).includes('ALGOL')
+    })
+
+    it('Tests button functionallity', async function () {
+        await page.goto('http://localhost:3000/');
+        await page.click('#ee9823ab-c3e8-4a14-b998-8c22ec246bd3')
+        const visible = await page.isVisible('.extra p')
+        expect(visible).to.be.true
+        const buttonText = await page.textContent('#ee9823ab-c3e8-4a14-b998-8c22ec246bd3')
+        expect(buttonText).to.equal('Less')
+    })
+
+    it('Tests button functionallity', async function () {
+        await page.goto('http://localhost:3000/');
+        await page.click('.accordion:last-child .head button')
+        await page.click('.accordion:last-child .head button')
+        const visible = await page.isVisible('.extra p')
+        expect(visible).to.be.false
+        const buttonText = await page.textContent('#ee9823ab-c3e8-4a14-b998-8c22ec246bd3')
+        expect(buttonText).to.equal('More')
     })
 
 });
