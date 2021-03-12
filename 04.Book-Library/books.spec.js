@@ -50,13 +50,35 @@ describe('E2E tests', function () {
 
             //`http://localhost:3030/jsonstore/collections/books`
         it('Load books', async function () {
-            await page.goto('http://localhost:3000/')
+            await page.goto(host)
             await page.click('#loadBooks')
 
             const results = await page.$$eval('tbody', (value) => value.map(x => x.textContent))
             expect(results[0]).to.includes('Harry Potter and the Philosopher\'s Stone\n')
             expect(results[0]).to.includes('C# Fundamentals')
         })
+        it('Add new books', async function(){
+            const title = 'Crazy Book'
+            const author = 'Crazy Author'
+            page.route(host, route => route.fulfill(json({ author: 'Best Author', title: 'LOALA', _id: '2214512' })));
+            await page.goto(host)
+            const visible = await page.isVisible('#createForm')
+            expect(visible).to.be.true
+            await page.fill('[name="title"]', title)
+            await page.fill('[name="author"]', author)
+
+            const [request] = await Promise.all([
+                page.waitForRequest(request => request.url().includes('/jsonstore/collections/books') && request.method() === 'POST'),
+                page.click('text=Submit')
+            ])
+            expect(request.method()).to.equal('POST');
+            const postData = JSON.parse(request.postData());
+            expect(postData.author).to.equal(author);
+            expect(postData.title).to.equal(title) 
+
+        })
+        it('Edit Book')
+
     })
 
 
