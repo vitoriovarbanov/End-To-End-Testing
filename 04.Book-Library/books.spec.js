@@ -48,7 +48,7 @@ describe('E2E tests', function () {
             await page.screenshot({ path: `index.png` });
         })
 
-            //`http://localhost:3030/jsonstore/collections/books`
+        //http://localhost:3030/jsonstore/collections/books/d953e5fb-a585-4d6b-92d3-ee90697398a0
         it('Load books', async function () {
             await page.goto(host)
             await page.click('#loadBooks')
@@ -57,7 +57,7 @@ describe('E2E tests', function () {
             expect(results[0]).to.includes('Harry Potter and the Philosopher\'s Stone\n')
             expect(results[0]).to.includes('C# Fundamentals')
         })
-        it('Add new books', async function(){
+        it('Add new books', async function () {
             const title = 'Crazy Book'
             const author = 'Crazy Author'
             page.route(host, route => route.fulfill(json({ author: 'Best Author', title: 'LOALA', _id: '2214512' })));
@@ -74,10 +74,37 @@ describe('E2E tests', function () {
             expect(request.method()).to.equal('POST');
             const postData = JSON.parse(request.postData());
             expect(postData.author).to.equal(author);
-            expect(postData.title).to.equal(title) 
+            expect(postData.title).to.equal(title)
 
         })
-        it('Edit Book')
+        it.only('Edit Book', async function () {
+            const title = 'TT'
+            const author = 'slslsls'
+            page.route(host, route => route.fulfill(json({ author: 'Gg', title: 'LALA', _id: '22' })));
+            const mock = {
+                author: 'Gg',
+                title: 'LALA',
+                _id: '22',
+            };
+            await page.goto(host)
+            await page.click('#loadBooks')
+            await page.click("tbody tr:last-child .editBtn")
+            const visible = await page.isVisible('#editForm')
+            expect(visible).to.be.true
+            await page.$eval('#editTitle', el => el.value = 'Ttt');
+            await page.$eval('#editAuthor', el => el.value = 'Lala');
+
+            const [request] = await Promise.all([
+                page.waitForRequest(request => request.url().includes('/jsonstore/collections/books') && request.method() === 'PUT'),
+                page.click('text=Save')
+            ])
+
+            const postData = JSON.parse(request.postData());
+            console.log(postData)
+            expect(postData.author).to.equal('Lala');
+            expect(postData.title).to.equal('Ttt');
+
+        })
 
     })
 
